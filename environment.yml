@@ -1,0 +1,12 @@
+name: fastmri-dicom
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - h5py=2.10.0
+  - ipykernel=5.3.4
+  - ipython=7.22.0
+  - matplotlib=3.3.4
+  - numpy=1.20.1
+  - pillow=8.2.0
+  - pydicom=2.1.2
