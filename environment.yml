@@ -10,3 +10,4 @@ dependencies:
   - numpy=1.20.1
   - pillow=8.2.0
   - pydicom=2.1.2
+  - xmltodict=0.12.0
