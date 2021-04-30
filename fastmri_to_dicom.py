@@ -12,7 +12,12 @@ from pydicom.uid import generate_uid
 
 import xmltodict
 
-def fastmri_to_dicom(filename: Path, reconstruction_name: str, outfolder: Path) -> None:
+def fastmri_to_dicom(filename: Path,
+    reconstruction_name: str,
+    outfolder: Path,
+    flip_up_down: bool = False,
+    flip_left_right: bool = False) -> None:
+
     fileparts = os.path.splitext(filename.name)
     patientName = fileparts[0]
     f = h5py.File(filename,'r')
@@ -36,19 +41,25 @@ def fastmri_to_dicom(filename: Path, reconstruction_name: str, outfolder: Path) 
     sequenceParameters = head['ismrmrdHeader']['sequenceParameters'] # ['TR', 'TE', 'TI', 'flipAngle_deg', 'sequence_type', 'echo_spacing']
 
     # Some calculated values
-    pixelSizeX = int(reconSpace['fieldOfView_mm']['x'])/int(reconSpace['matrixSize']['x'])
-    pixelSizeY = int(reconSpace['fieldOfView_mm']['y'])/int(reconSpace['matrixSize']['z'])
+    pixelSizeX = float(reconSpace['fieldOfView_mm']['x'])/float(reconSpace['matrixSize']['x'])
+    pixelSizeY = float(reconSpace['fieldOfView_mm']['y'])/float(reconSpace['matrixSize']['z'])
 
 
     # Get and prep pixel data
     img_data = f[reconstruction_name][:]
     slices = img_data.shape[0]
 
+    if flip_left_right:
+        img_data = img_data[:, :, ::-1]
+
+    if flip_up_down:
+        img_data = img_data[:, ::-1, :]
+
     image_max = 1024
     scale = image_max / np.percentile(img_data, 99.9)
     pixels_scaled = np.clip((scale * img_data), 0, image_max).astype('int16')
-    windowCenter = np.percentile(pixels_scaled, 50)
-    windowWidth = 2 * (np.percentile(pixels_scaled, 95) - np.percentile(pixels_scaled, 5))
+    windowWidth = 2 * (np.percentile(pixels_scaled, 99.9) - np.percentile(pixels_scaled, 0.1))
+    windowCenter = windowWidth/2
 
     studyInstanceUid = generate_uid('999.')
     seriesInstanceUid = generate_uid('9999.')
@@ -71,6 +82,8 @@ def fastmri_to_dicom(filename: Path, reconstruction_name: str, outfolder: Path) 
         dt = datetime.datetime.now()
         ds.ContentDate = dt.strftime('%Y%m%d')
         timeStr = dt.strftime('%H%M%S.%f')  # long format with micro seconds
+        ds.SOPClassUID = '1.2.840.10008.5.1.4.1.1.4'
+        ds.SOPInstanceUID = generate_uid('9999.')
         ds.ContentTime = timeStr
         ds.Modality = 'MR'
         ds.ModalitiesInStudy = ['', 'PR', 'MR', '']
@@ -129,9 +142,15 @@ def main() -> None:
     parser.add_argument('--filename' , type=str, help='File name', required=True)
     parser.add_argument('--reconstruction_name' , type=str, help='Reconstruction name', default='reconstruction_rss', required=False)
     parser.add_argument('--outfolder', type=str, help='Output folder', required = False)
+    parser.add_argument('--flip_up_down', type=bool, help='Flip image up/down', default=True)
+    parser.add_argument('--flip_left_right', type=bool, help='Flip image left/right', default=False)
     args = parser.parse_args()
 
-    fastmri_to_dicom(filename = Path(args.filename), reconstruction_name=args.reconstruction_name, outfolder=args.outfolder)
+    fastmri_to_dicom(filename = Path(args.filename),
+        reconstruction_name=args.reconstruction_name,
+        outfolder=args.outfolder,
+        flip_up_down=args.flip_up_down,
+        flip_left_right=args.flip_left_right)
 
 if __name__ == '__main__':
     main()
