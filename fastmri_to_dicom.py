@@ -8,6 +8,8 @@ import numpy as np
 import pydicom
 from pydicom.dataset import Dataset, FileMetaDataset
 from pydicom.sequence import Sequence
+from pydicom.uid import generate_uid
+
 import xmltodict
 
 def fastmri_to_dicom(filename: Path, reconstruction_name: str, outfolder: Path) -> None:
@@ -37,6 +39,7 @@ def fastmri_to_dicom(filename: Path, reconstruction_name: str, outfolder: Path) 
     pixelSizeX = int(reconSpace['fieldOfView_mm']['x'])/int(reconSpace['matrixSize']['x'])
     pixelSizeY = int(reconSpace['fieldOfView_mm']['y'])/int(reconSpace['matrixSize']['z'])
 
+
     # Get and prep pixel data
     img_data = f[reconstruction_name][:]
     slices = img_data.shape[0]
@@ -45,7 +48,10 @@ def fastmri_to_dicom(filename: Path, reconstruction_name: str, outfolder: Path) 
     scale = image_max / np.percentile(img_data, 99.9)
     pixels_scaled = np.clip((scale * img_data), 0, image_max).astype('int16')
     windowCenter = np.percentile(pixels_scaled, 50)
-    windowWidth = np.percentile(pixels_scaled, 95) - np.percentile(pixels_scaled, 5)
+    windowWidth = 2 * (np.percentile(pixels_scaled, 95) - np.percentile(pixels_scaled, 5))
+
+    studyInstanceUid = generate_uid('999.')
+    seriesInstanceUid = generate_uid('9999.')
 
     for s in range(0, slices):
         slice_filename = "%s_%03d.dcm"%(patientName, s)
@@ -86,16 +92,16 @@ def fastmri_to_dicom(filename: Path, reconstruction_name: str, outfolder: Path) 
         ds.MagneticFieldStrength = acquisitionSystemInformation['systemFieldStrength_T']
         ds.FlipAngle = str(sequenceParameters['flipAngle_deg'])
         ds.PatientPosition = measurementInformation['patientPosition']
-        # ds.StudyInstanceUID = '9999.201195313229306300504165090941650322040' #
-        # ds.SeriesInstanceUID = '9999.77565704772180596049766113144111491928' #
+        ds.StudyInstanceUID = studyInstanceUid
+        ds.SeriesInstanceUID = seriesInstanceUid
         ds.StudyID = measurementInformation['measurementID']
         ds.InstanceNumber = str(s+1)
         ds.ImagesInAcquisition = str(slices)
         ds.SamplesPerPixel = 1
         ds.PhotometricInterpretation = 'MONOCHROME2'
         ds.NumberOfFrames = "1"
-        ds.Rows = pixels_scaled.shape[1]
-        ds.Columns = pixels_scaled.shape[0]
+        ds.Rows = slice_pixels.shape[1]
+        ds.Columns = slice_pixels.shape[0]
         ds.PixelSpacing = [pixelSizeX, pixelSizeY]
         ds.PixelAspectRatio = [1, 1]
         ds.BitsAllocated = 16
