@@ -48,7 +48,7 @@ def process_container(connection_string: str,
             # Convert to DICOM
             dicomFolder = Path(d.name)/dicomBlobPath
             dicomFolder.mkdir(parents = True, exist_ok = True)
-            fastmri_to_dicom(filename = destBlobPath, reconstruction_name = "reconstruction_rss", outfolder = dicomFolder)
+            fastmri_to_dicom(filename = destBlobPath, reconstruction_name = "reconstruction_rss", outfolder = dicomFolder, flip_up_down=True)
 
             dicomFiles = dicomFolder.glob('*.dcm')
             for dcm in dicomFiles:
