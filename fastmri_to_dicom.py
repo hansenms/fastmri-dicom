@@ -42,7 +42,7 @@ def fastmri_to_dicom(filename: Path,
 
     # Some calculated values
     pixelSizeX = float(reconSpace['fieldOfView_mm']['x'])/float(reconSpace['matrixSize']['x'])
-    pixelSizeY = float(reconSpace['fieldOfView_mm']['y'])/float(reconSpace['matrixSize']['z'])
+    pixelSizeY = float(reconSpace['fieldOfView_mm']['y'])/float(reconSpace['matrixSize']['y'])
 
 
     # Get and prep pixel data
@@ -103,6 +103,7 @@ def fastmri_to_dicom(filename: Path,
         ds.ImagedNucleus = '1H'
         ds.EchoNumbers = "1"
         ds.MagneticFieldStrength = acquisitionSystemInformation['systemFieldStrength_T']
+        ds.SpacingBetweenSlices = reconSpace['fieldOfView_mm']['z'] # 2D, assume 0 slice spacing
         ds.FlipAngle = str(sequenceParameters['flipAngle_deg'])
         ds.PatientPosition = measurementInformation['patientPosition']
         ds.StudyInstanceUID = studyInstanceUid
