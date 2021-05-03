@@ -44,8 +44,6 @@ def fastmri_to_dicom(filename: Path,
     pixelSizeX = float(reconSpace['fieldOfView_mm']['x'])/float(reconSpace['matrixSize']['x'])
     pixelSizeY = float(reconSpace['fieldOfView_mm']['y'])/float(reconSpace['matrixSize']['y'])
 
-    print("pixelsize: " + str(pixelSizeX) + ',' + str(pixelSizeY))
-
     # Get and prep pixel data
     img_data = f[reconstruction_name][:]
     slices = img_data.shape[0]
