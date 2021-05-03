@@ -5,7 +5,7 @@ Some simple scripting to generate DICOMs from the [FastMRI.org](https://fastmri.
 Convert a single file with:
 
 ```bash
-python fastmri_to_dicom.py --filename good.h5
+python fastmri_to_dicom.py --filename fastmrifile.h5
 ```
 
 If you have your data in an Azure Blob storage account, you can process from one container to another with:
