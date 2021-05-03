@@ -44,6 +44,7 @@ def fastmri_to_dicom(filename: Path,
     pixelSizeX = float(reconSpace['fieldOfView_mm']['x'])/float(reconSpace['matrixSize']['x'])
     pixelSizeY = float(reconSpace['fieldOfView_mm']['y'])/float(reconSpace['matrixSize']['y'])
 
+    print("pixelsize: " + str(pixelSizeX) + ',' + str(pixelSizeY))
 
     # Get and prep pixel data
     img_data = f[reconstruction_name][:]
@@ -114,8 +115,8 @@ def fastmri_to_dicom(filename: Path,
         ds.SamplesPerPixel = 1
         ds.PhotometricInterpretation = 'MONOCHROME2'
         ds.NumberOfFrames = "1"
-        ds.Rows = slice_pixels.shape[1]
-        ds.Columns = slice_pixels.shape[0]
+        ds.Rows = slice_pixels.shape[0]
+        ds.Columns = slice_pixels.shape[1]
         ds.PixelSpacing = [pixelSizeX, pixelSizeY]
         ds.PixelAspectRatio = [1, 1]
         ds.BitsAllocated = 16
